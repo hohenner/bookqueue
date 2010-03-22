@@ -53,7 +53,7 @@ Initial public release
 
 == 1.2.4 
 
-- Fixed exception in file pointer reset code that was triggered when retries
-  were exhausted (thanks to Joey Geiger for the bug report and patch)
-
+*  r4984, konstantin, 2008-08-11 14:49:18 +0400
+  * fixed a bug: <NoMethodError: You have a nil object when you didn't expect it!
+                  The error occurred while evaluating nil.body_stream>
 

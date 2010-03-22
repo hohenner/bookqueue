@@ -264,7 +264,7 @@ them.
     end
 
     def reset_fileptr_offset(request, offset = 0)
-      if(request && request.body_stream && request.body_stream.respond_to?(:pos))
+      if(request.body_stream && request.body_stream.respond_to?(:pos))
         begin
           request.body_stream.pos = offset
         rescue Exception => e
