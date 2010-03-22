@@ -23,7 +23,7 @@ class Book < ActiveRecord::Base
   validates_presence_of :author,  :message => "can't be blank"
   validates_numericality_of :pages, :message => "is not a number"
 
-  validate :validate_url  
+  # validate :validate_url  
   
   has_attached_file :cover,
                     :resize_to => '184x246>', 
@@ -76,6 +76,7 @@ class Book < ActiveRecord::Base
         taken = self.days_taken
         post.body  = "'#{title}', by #{author} - finished in #{days_taken} days"  
         status = TWITTER.status(:post, "'#{title}', by #{author} - finished in #{days_taken} days") if configatron.twitter_use
+        #ActionController::Base.new.expire_fragment(:controller => "books", :action => "index")  
     end
     post.save
   end
@@ -94,6 +95,60 @@ class Book < ActiveRecord::Base
   def create_media
     self.update_media("next")
   end
+  
+  def pages_by_month
+    months       = []
+    total_months = (self.finished_on.month - self.started_on.month) + 12 * (self.finished_on.year - self.started_on.year)
+    range        = 0..total_months
+    range.each do |i| 
+      current_month = self.started_on.month+i
+      current_month = 12 if current_month > 12      
+      months << { 
+                  :month  => Date.parse("#{current_month}/#{self.started_on.year}"),
+                  :pages  =>(pages / (total_months+1))
+                } 
+    end
+    return months
+  end
+  
+  def self.pages_by_month
+    items           = []
+    processed_items = []
+    
+    finished.each do |book| 
+      next if book.pages.nil?
+      next if book.started_on.nil?
+      next if book.finished_on.nil?
+      book.pages_by_month.each {|i| items << i } 
+    end
+    
+    items.each do |i|
+      target_month = processed_items.find{|o| o[:month] == i[:month]}
+      if target_month 
+        target_month[:pages] +=  i[:pages]
+      else
+        processed_items << {:month => i[:month], :pages => i[:pages]}
+      end
+    end
+    return processed_items
+  end
+  
+  
+  def self.pages_by_year
+    items           = Book.pages_by_month
+    processed_items = []
+    {:year => 2007, :items => [1,2,]}
+    items.each do |i|
+     target_year = processed_items.find{|o| o[:year] == Date.parse(i[:month].to_s).year}
+     if target_year 
+       target_year[:items] << i
+     else
+       processed_items << {:year => Date.parse(i[:month].to_s).year, :items => [i]}
+     end
+    end
+    return processed_items
+  end
+  
   
   private 
 
